@@ -134,17 +134,42 @@ class Day04(unittest.TestCase):
             count += len(x)
         self.assertEqual(2613, count)
 
+
+    def part2(self, lines:list[str]):
+        lower_bound = 0
+        upper_bound = len(lines) - 1
+        count = 0
+        for i in range(upper_bound):
+            for j in range(upper_bound):
+                if lines[j][i] == "A":
+                    if j - 1 < lower_bound | i - 1 < lower_bound:
+                        break
+                    if j + 1 > upper_bound | i + 1 > upper_bound:
+                        break
+
+                    ul = lines[j-1][i-1]
+                    ur = lines[j-1][i+1]
+                    ll = lines[j+1][i-1]
+                    lr = lines[j+1][i+1]
+
+                    down = ((ul == "M") & (lr == "S")) |  ((ul == "S") & (lr == "M"))
+                    up = ((ur == "M") & (ll == "S")) |  ((ur == "S") & (ll == "M"))
+                    if down & up:
+                        count += 1
+        return count
+
     def test_part2_sample(self):
         with open("sample.txt", "r") as file:
             lines = file.readlines()
-
-        self.assertEqual(True, True)
+        count = self.part2(lines)
+        self.assertEqual(9, count)
 
     def test_part2_actual(self):
         with open("day04.txt", "r") as file:
             lines = file.readlines()
-
-        self.assertEqual(True, True)
+        # doesn't work :(
+        count = self.part2(lines)
+        self.assertEqual(9, count)
 
 
 if __name__ == '__main__':
