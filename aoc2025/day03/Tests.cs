@@ -40,16 +40,17 @@ public class Tests
             "234234234234278",
             "818181911112111"};
         
-        var biggest = FindBiggestTwelve(input);
+        var biggest = FindBiggestTwelveOptimizedNick(input);
 
         biggest.Sum().ShouldBe(3121910778619L);
     }
     
     [Test]
+    [Category("theone")]
     public async Task Part2Actual()
     {
         var input = await Utilities.ReadInputByDay("day03");
-        var biggest = FindBiggestTwelve(input);
+        var biggest = FindBiggestTwelveOptimizedNick(input);
 
         biggest.Sum().ShouldBe(3121910778619L);
     }
@@ -62,6 +63,45 @@ public class Tests
         {
             var combos = Build(line.ToList());
             var max = combos.Select(long.Parse).Max();
+            biggest.Add(max);
+        }
+
+        return biggest;
+    }
+    
+    private static List<long> FindBiggestTwelveOptimized(List<string> input)
+    {
+        var biggest = new List<long>();
+
+        foreach (var line in input)
+        {
+            var max = FindMaxSubsequence(line, 12);
+            biggest.Add(max);
+        }
+
+        return biggest;
+    }
+    
+    private static List<long> FindBiggestTwelveOptimizedInt(List<string> input)
+    {
+        var biggest = new List<long>();
+
+        foreach (var line in input)
+        {
+            var max = FindMaxSubsequenceInt(line, 12);
+            biggest.Add(max);
+        }
+
+        return biggest;
+    }
+    
+    private static List<long> FindBiggestTwelveOptimizedNick(List<string> input)
+    {
+        var biggest = new List<long>();
+
+        foreach (var line in input)
+        {
+            var max = FindMaxSubsequenceNick(line, 12);
             biggest.Add(max);
         }
 
@@ -105,13 +145,148 @@ public class Tests
         return results;
     }
     
+    private static long FindMaxSubsequence(string input, int maxLength = 12)
+    {
+        var n = input.Length;
+        var maxValue = 0L;
+        
+        // Iterate through all possible subsequences using bitmasks
+        // Start from 1 to exclude empty subsequence
+        var maxMask = 1L << n;
+        for (long mask = 1; mask < maxMask; mask++)
+        {
+            // Count set bits - skip if length exceeds maxLength
+            var bitCount = 0;
+            var tempMask = mask;
+            while (tempMask != 0)
+            {
+                bitCount++;
+                tempMask &= tempMask - 1; // Clear the least significant set bit
+            }
+            
+            if (bitCount > maxLength) continue;
+            
+            // Build subsequence from bit positions
+            var sb = new System.Text.StringBuilder(bitCount);
+            for (var i = 0; i < n; i++)
+            {
+                if ((mask & (1L << i)) != 0)
+                {
+                    sb.Append(input[i]);
+                }
+            }
+            
+            // Parse and track maximum
+            if (sb.Length > 0 && long.TryParse(sb.ToString(), out var value))
+            {
+                if (value > maxValue)
+                    maxValue = value;
+            }
+        }
+        
+        return maxValue;
+    }
+    
+    
+    private static long FindMaxSubsequenceInt(string input, int maxLength = 12)
+    {
+        // Convert string to integer array upfront
+        var digits = input.Select(c => c - '0').ToArray();
+        var n = digits.Length;
+        var maxValue = 0L;
+        
+        // Iterate through all possible subsequences using bitmasks
+        // Start from 1 to exclude empty subsequence
+        var maxMask = 1L << n;
+        for (long mask = 1; mask < maxMask; mask++)
+        {
+            // Count set bits - skip if length exceeds maxLength
+            var bitCount = 0;
+            var tempMask = mask;
+            while (tempMask != 0)
+            {
+                bitCount++;
+                tempMask &= tempMask - 1; // Clear the least significant set bit
+            }
+            
+            if (bitCount > maxLength) continue;
+            
+            // Build number directly using arithmetic instead of string manipulation
+            long value = 0;
+            for (var i = 0; i < n; i++)
+            {
+                if ((mask & (1L << i)) != 0)
+                {
+                    value = value * 10 + digits[i];
+                }
+            }
+            
+            // Track maximum
+            if (value > maxValue)
+                maxValue = value;
+        }
+        
+        return maxValue;
+    }
+    
+    private static long FindMaxSubsequenceNick(string input, int maxLength = 12)
+    {
+        var batteries = input[..].Select(b => (int)char.GetNumericValue(b)).ToArray();
+        
+        
+        var bank = new Bank(input, maxLength);
+        
+        return bank.MaxJoltage;
+    }
+    
+    private static List<string> BuildBitManipulation(List<char> item, int maxLength = 12)
+    {
+        var results = new List<string>();
+        var input = new string(item.ToArray());
+        var n = input.Length;
+        
+        // Iterate through all possible subsequences using bitmasks
+        // Start from 1 to exclude empty subsequence
+        var maxMask = 1L << n;
+        for (long mask = 1; mask < maxMask; mask++)
+        {
+            // Count set bits - skip if length exceeds maxLength
+            var bitCount = 0;
+            var tempMask = mask;
+            while (tempMask != 0)
+            {
+                bitCount++;
+                tempMask &= tempMask - 1; // Clear the least significant set bit
+            }
+            
+            if (bitCount > maxLength) continue;
+            
+            // Build subsequence from bit positions
+            var sb = new System.Text.StringBuilder(bitCount);
+            for (var i = 0; i < n; i++)
+            {
+                if ((mask & (1L << i)) != 0)
+                {
+                    sb.Append(input[i]);
+                }
+            }
+            
+            if (sb.Length > 0)
+            {
+                results.Add(sb.ToString());
+            }
+        }
+        
+        return results;
+    }
+
     private static List<int> FindBiggestPair(List<string> input)
     {
         var biggest = new List<int>();
 
         foreach (var item in input)
         {
-            var numItem = item.ToCharArray().Select(x=> x - '0').ToList();
+            var numItem = item.ToCharArray().Select(x => x - '0').ToList();
             var max = 0;
             for (var x = 0; x < numItem.Count; x++)
             {
@@ -126,5 +301,41 @@ public class Tests
         }
 
         return biggest;
+    }
+    
+    // https://github.com/ngallegos/aoc/blob/main/2025/csharp/AOC2025.Tests/Day03Tests.cs
+    class Bank
+    {
+        public long MaxJoltage { get; } = 0;
+
+        public Bank(string bank, int batteriesToProcess = 2)
+        {
+            var batteries = bank[..].Select(b => (int)char.GetNumericValue(b)).ToArray();
+            
+            MaxJoltage = FindMaxJoltage(batteries, batteriesToProcess);
+        }
+        
+        private long FindMaxJoltage(int[] batteries, int batteriesToProcess)
+        {
+            var max = batteries.Max();
+            if (batteriesToProcess == 1)
+            {
+                return max;
+            }
+            
+            var indexOfMaximum = Array.IndexOf(batteries, max);
+            var remainingBatteries = batteriesToProcess - 1;
+            var lastValidIndex = batteries.Length - remainingBatteries - 1;
+            var multiplier = (long)Math.Pow(10, remainingBatteries);
+            if (indexOfMaximum > lastValidIndex)
+            {
+                var validBatteries = batteries[..^remainingBatteries];
+                max = validBatteries.Max();
+                indexOfMaximum = Array.IndexOf(validBatteries, max);
+                return max * multiplier + FindMaxJoltage(batteries[(indexOfMaximum+1)..], remainingBatteries);
+            }
+            
+            return max * multiplier + FindMaxJoltage(batteries[(indexOfMaximum+1)..], remainingBatteries);
+        }
     }
 }
